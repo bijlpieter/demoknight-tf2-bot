@@ -16,7 +16,7 @@ client.on('message', async msg => {
 		}
 	}
 	if (msg.content.startsWith('!demoknighttf2')) {
-		msg.channel.send(demoknighttf2 + "gamers praised the holy demoknight team fortress 2");
+		msg.channel.send(demoknighttf2 + " gamers praised the holy demoknight team fortress 2");
 	}
 	return undefined;
 });
