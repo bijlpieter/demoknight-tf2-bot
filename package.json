@@ -1,0 +1,14 @@
+{
+  "name": "demoknight tf2",
+  "version": "1.0.0",
+  "description": "demoknight tf2",
+  "main": "demoknighttf2.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chrysophylaxs",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^11.4.2",
+  }
+}
