@@ -1,1 +1,1 @@
-worker: node musicbot
+worker: node demoknighttf2
