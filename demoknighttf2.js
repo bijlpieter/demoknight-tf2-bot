@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 
 const client = new Discord.Client({disableEveryone: true});
-let demoknighttf2 = 307;
+let demoknighttf2 = 311;
 
 client.on("ready", function() {
 	client.user.setActivity('demoknight tf2', {type: 'PLAYING'});
@@ -16,7 +16,7 @@ client.on('message', async msg => {
 		}
 	}
 	if (msg.content.startsWith('!demoknighttf2')) {
-		msg.channel.send(demoknighttf2);
+		msg.channel.send("demoknight team fortress 2 counter: " + demoknighttf2);
 	}
 	return undefined;
 });
