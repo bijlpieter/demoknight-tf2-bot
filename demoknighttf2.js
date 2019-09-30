@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 
 const client = new Discord.Client({disableEveryone: true});
-let demoknighttf2 = 311;
+let demoknighttf2 = 313;
 
 client.on("ready", function() {
 	client.user.setActivity('demoknight tf2', {type: 'PLAYING'});
@@ -16,8 +16,15 @@ client.on('message', async msg => {
 		}
 	}
 	if (msg.content.startsWith('!demoknighttf2')) {
-		msg.channel.send(demoknighttf2 + " gamers praised the holy demoknight team fortress 2");
+		msg.channel.send(msg.author.username + " has praised the holy demoknight team fortress 2");
 	}
+	else if (msg.content.startsWith("!say")) {
+		args = args.slice(1);
+    	let sayMessage = args.join(" ");
+    	msg.delete(); 
+   		msg.channel.send(sayMessage);
+	}
+
 	return undefined;
 });
 
