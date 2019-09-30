@@ -16,7 +16,7 @@ client.on('message', async msg => {
 		}
 	}
 	if (msg.content.startsWith('!demoknighttf2')) {
-		msg.channel.send(msg.author.username + " has praised the holy demoknight team fortress 2");
+		msg.channel.send(msg.author.displayName + " has praised the holy demoknight team fortress 2");
 	}
 	else if (msg.content.startsWith("!say")) {
 		args = args.slice(1);
