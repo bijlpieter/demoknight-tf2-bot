@@ -1,7 +1,6 @@
 const discord = require('discord.js');
 const tmi = require('tmi.js');
 const fs = require('fs');
-const config = require('./config.json');
 
 const options = {
 	connection: {
