@@ -1,0 +1,19 @@
+{
+    "!commands": "!commands, !ctgp, !demoknight, !demoknighttf2, !discord, !div, !division, !donate, !funkykong, !hud, !ip, !posture, !scraptf, !sens, !sensitivity, !viewmodel, !youtube",
+    "!demoknight": " has praised the holy demoknight team fortress 2",
+    "!demoknighttf2": " has praised the holy demoknight team fortress 2",
+    "!hud": "SolarLightHUD. Unfinished, but it works! https://github.com/SolarLightTF2/SolarLightHUD",
+    "!sens": "Solar's in-game sensitivity is 2. He uses a DPI of 1600. That's 13 cm per 360",
+    "!sensitivity": "Solar's in-game sensitivity is 2. He uses a DPI of 1600. That's 13 cm per 360",
+    "!discord": "Join Solar's Discord channel to stay up to date on streams, or chat with the regulars! https://discord.gg/fnu4ZK8",
+    "!youtube": "https://www.youtube.com/channel/UCTZ2ANUw7OHz2LGci_6H34A",
+    "!ctgp": "CTGP is a mod for Mario Kart Wii that adds a ton of new tracks as well as some new features, such as being able to play online again! - Get it at https://www.chadsoft.co.uk/",
+    "!div": "Solar's ETF2L division is Mid.",
+    "!division": "Solar's ETF2L division is Mid.",
+    "!donate": "You can donate money or TF2 items via these links respectively: https://streamlabs.com/solarlighttf2 https://scrap.tf/tip/solarlighteroni",
+    "!funkykong": "funky kong mario kart wii",
+    "!ip": "Solar's community server: steam://connect/51.83.120.39:27016",
+    "!posture": "Solar has his back bent over to resemble a ramp - he likes to trimp off them",
+    "!scraptf": "https://scrap.tf/tip/solarlighteroni",
+    "!viewmodel": "viewmodel_fov 70; tf_use_min_viewmodels 1"
+}
