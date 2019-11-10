@@ -1,6 +1,7 @@
 const discord = require('discord.js');
 const tmi = require('tmi.js');
 const req = require('request');
+const config = require('./config.json');
 
 const options = {
 	connection: {
@@ -12,68 +13,60 @@ const options = {
 	},
 	identity: {
 		username: "demoknight_tf2",
-		password: process.env.TWITCH
+		password: config.twitch
 	},
 	channels: ['SolarLightTF2', 'chrysophylaxss']
 };
 
 const dclient = new discord.Client({disableEveryone: true});
+dclient.login(config.token);
 const tclient = new tmi.client(options);
 tclient.connect();
+
+let commands = {
+	"!commands": "error"
+};
+
+req(config.commands, { json: true }, (err, res, body) => {
+	if (err) return console.log(err);
+	commands = body;
+});
 
 dclient.on("ready", function() {
 	dclient.user.setActivity('demoknight tf2', {type: 'PLAYING'});
 	console.log("demoknight tf2");
 });
 
-let commands = {
-	"!commands": "error"
-};
-
-req(process.env.COMMANDS, { json: true }, (err, res, body) => {
-	if (err) return console.log(err);
-	commands = body;
-});
-
 tclient.on('chat', (channel, userstate, message, self) => {
-	if (self) return;
-	if (message.startsWith('!addcomm') && (userstate.badges.hasOwnProperty('moderator') || userstate.badges.hasOwnProperty('broadcaster'))) {
-		if (newCommand(message)) tclient.say(channel, "Added or updated command!");
-		else tclient.say(channel, "Could not add command!");
-	}
-	else if (message.startsWith('!delcomm') && (userstate.badges.hasOwnProperty('moderator') || userstate.badges.hasOwnProperty('broadcaster'))) {
-		if (delCommand(message)) tclient.say(channel, "Removed command!");
-		else tclient.say(channel, "Could not remove command!");
-	}
-	else if (message.startsWith('!')) {
-		let msg = message.toLowerCase();
-		if (commands.hasOwnProperty(msg)) {
-			response = commands[msg];
-			if (msg.startsWith("!demoknight")) response = userstate['display-name'] + response;
-			tclient.say(channel, response);
-		}
+	if (message.startsWith("!") && !self) {
+		let response = handleCommand(message.toLowerCase(), userstate['display-name'], userstate.badges.hasOwnProperty('moderator') || userstate.badges.hasOwnProperty('broadcaster'));
+		if (response != "") tclient.say(channel, response);
 	}
 });
 
 dclient.on('message', (message) => {
-	if (message.content.startsWith('!addcomm') && message.member.hasPermission('MANAGE_MESSAGES', true, true, true)) {
-		if (newCommand(message.content)) message.channel.send("Added or updated command!");
-		else message.channel.send("Could not add command!");
-	}
-	else if (message.content.startsWith('!delcomm') && message.member.hasPermission('MANAGE_MESSAGES', true, true, true)) {
-		if (delCommand(message.content)) message.channel.send("Removed command!");
-		else message.channel.send("Could not remove command!");
-	}
-	else if (message.content.startsWith('!')) {
-		let msg = message.content.toLowerCase();
-		if (commands.hasOwnProperty(msg)) {
-			response = commands[msg];
-			if (msg.startsWith("!demoknight")) response = message.member.displayName + response;
-			message.channel.send(response);
-		}
+	if (message.content.startsWith("!") && !message.author.bot) {
+		let response = handleCommand(message.content.toLowerCase(), message.member.displayName, message.member.hasPermission('MANAGE_MESSAGES', true, true, true));
+		if (response != "") message.channel.send(response);
 	}
 	return undefined;
 });
+
+function handleCommand(msg, name, mod) {
+	if (msg.startsWith('!addcomm') && mod) {
+		if (newCommand(msg)) return "Added or updated command!";
+		else return "Could not add command!";
+	}
+	else if (msg.startsWith('!delcomm') && mod) {
+		if (delCommand(msg)) return "Removed command!"
+		else return "Could not remove command!";
+	}
+	else if (commands.hasOwnProperty(msg)) {
+		if (msg.startsWith("!demoknight")) return name + commands[msg];
+		else return commands[msg];
+	}
+	else return "";
+}
 
 function newCommand(msg) {
 	let args = msg.split(' ');
@@ -102,9 +95,7 @@ function delCommand(msg) {
 function updateCommands() {
 	req({
 		method: "PUT",
-		uri: process.env.COMMANDS,
+		uri: config.commands,
 		json: commands
 	});
 }
-
-dclient.login(process.env.TOKEN);
