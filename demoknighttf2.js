@@ -70,7 +70,8 @@ function handleCommand(msg, name, mod) {
 function newCommand(msg) {
 	let args = msg.split(' ');
 	if (args.length < 3) return false;
-	let newComm = args[1];
+	let newComm = args[1].replace("!", "");
+	if (newComm == "commands") return false;
 	args = args.splice(2);
 	commands["!" + newComm] = args.join(" ");
 	if (commands.hasOwnProperty("!" + newComm)) commands["!commands"] += ", !" + newComm;
