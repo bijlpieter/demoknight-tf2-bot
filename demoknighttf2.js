@@ -41,7 +41,7 @@ tclient.on('chat', (channel, userstate, message, self) => {
 		if (newCommand(message)) tclient.say(channel, "Added or updated command!");
 		else tclient.say(channel, "Could not add command!");
 	}
-	else if (message.startsWith('!delcomm') && userstate['mod'] == true) {
+	else if (message.startsWith('!delcomm') && (userstate.badges.hasOwnProperty('moderator') || userstate.badges.hasOwnProperty('broadcaster'))) {
 		if (delCommand(message)) tclient.say(channel, "Removed command!");
 		else tclient.say(channel, "Could not remove command!");
 	}
