@@ -1,7 +1,6 @@
 const discord = require('discord.js');
 const tmi = require('tmi.js');
 const req = require('request');
-const config = require('./config.json');
 
 const options = {
 	connection: {
@@ -13,13 +12,13 @@ const options = {
 	},
 	identity: {
 		username: "demoknight_tf2",
-		password: config.twitch
+		password: process.env.TWITCH
 	},
 	channels: ['SolarLightTF2', 'chrysophylaxss']
 };
 
 const dclient = new discord.Client({disableEveryone: true});
-dclient.login(config.token);
+dclient.login(process.env.TOKEN);
 const tclient = new tmi.client(options);
 tclient.connect();
 
@@ -27,7 +26,7 @@ let commands = {
 	"!commands": "error"
 };
 
-req(config.commands, { json: true }, (err, res, body) => {
+req(process.env.COMMANDS, { json: true }, (err, res, body) => {
 	if (err) return console.log(err);
 	commands = body;
 });
@@ -95,7 +94,7 @@ function delCommand(msg) {
 function updateCommands() {
 	req({
 		method: "PUT",
-		uri: config.commands,
+		uri: process.env.COMMANDS,
 		json: commands
 	});
 }
