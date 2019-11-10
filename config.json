@@ -1,5 +1,0 @@
-{
-	"token": process.env.TOKEN,
-	"twitch": process.env.TWITCH,
-	"commands": process.env.COMMANDS
-}
