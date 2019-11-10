@@ -1,6 +1,6 @@
 const discord = require('discord.js');
 const tmi = require('tmi.js');
-const fs = require('fs');
+const req = require('request');
 
 const options = {
 	connection: {
@@ -26,8 +26,14 @@ dclient.on("ready", function() {
 	console.log("demoknight tf2");
 });
 
-let rawdata = fs.readFileSync('commands.json');
-let commands = JSON.parse(rawdata);
+let commands = {
+	"!commands": "error"
+};
+
+req(process.env.COMMANDS, { json: true }, (err, res, body) => {
+	if (err) return console.log(err);
+	commands = body;
+});
 
 tclient.on('chat', (channel, userstate, message, self) => {
 	if (self) return;
@@ -76,8 +82,7 @@ function newCommand(msg) {
 	args = args.splice(2);
 	commands["!" + newComm] = args.join(" ");
 	if (commands.hasOwnProperty("!" + newComm)) commands["!commands"] += ", !" + newComm;
-	let data = JSON.stringify(commands, null, 4);
-	fs.writeFileSync('commands.json', data);
+	updateCommands();
 	return true;
 }
 
@@ -88,11 +93,18 @@ function delCommand(msg) {
 	if (commands.hasOwnProperty("!" + delComm)) {
 		delete commands["!" + delComm];
 		commands["!commands"] = commands["!commands"].replace(", !" + delComm, "");
-		let data = JSON.stringify(commands, null, 4);
-		fs.writeFileSync('commands.json', data);
+		updateCommands();
 		return true;
 	}
 	else return false;
+}
+
+function updateCommands() {
+	req({
+		method: "PUT",
+		uri: process.env.COMMANDS,
+		json: commands
+	});
 }
 
 dclient.login(process.env.TOKEN);
