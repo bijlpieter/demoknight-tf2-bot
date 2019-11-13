@@ -14,7 +14,7 @@ const options = {
 		username: "demoknight_tf2",
 		password: process.env.TWITCH
 	},
-	channels: ['SolarLightTF2', 'chrysophylaxss']
+	channels: ['SolarLightTF2', 'mrswipez1', 'chrysophylaxss']
 };
 
 const dclient = new discord.Client({disableEveryone: true});
@@ -60,7 +60,6 @@ dclient.on('message', (message) => {
 });
 
 function handleCommand(msg, channel, name, mod) {
-
 	if (msg.startsWith('!addcomm') && mod) return newCommand(msg, channel);
 	else if (msg.startsWith('!delcomm') && mod) return delCommand(msg, channel);
 	else if (msg.startsWith("!demoknight")) return name + " has praised the holy demoknight team fortress 2";
