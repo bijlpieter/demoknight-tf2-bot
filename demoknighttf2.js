@@ -117,7 +117,7 @@ function createClip(channel) {
 		}, (err, res, body) => {
 			if (err) {
 				tclient.say(channel, "An error occurred!");
-				return;
+				return "";
 			}
 			let id = body.users[0]._id;
 			tclient.api({
