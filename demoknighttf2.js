@@ -14,7 +14,7 @@ const options = {
 		username: "demoknight_tf2",
 		password: process.env.TWITCH
 	},
-	channels: ['SolarLightTF2', 'mrswipez1', 'chrysophylaxss']
+	channels: ['SolarLightTF2', 'mrswipez1', 'chrysophylaxss', 'riskendeavors']
 };
 
 const dclient = new discord.Client({disableEveryone: true});
@@ -31,7 +31,10 @@ let commands = {
 	},
 	"chrysophylaxss": {
 		"!commands": "!commands, !demoknight"
-	}	
+	}
+	"riskendeavors": {
+		"!commands": "!commands, !demoknight"
+	}
 };
 
 req(process.env.COMMANDS, { json: true }, (err, res, body) => {
@@ -105,7 +108,7 @@ const clipped = new Set();
 function createClip(channel) {
 	if (!clipped.has(channel)) {
 		clipped.add(channel);
-		setTimeout(() => {clipped.delete(channel);}, 30000);
+		setTimeout(() => {clipped.delete(channel);}, 20000);
 		let uri = "https://api.twitch.tv/kraken/users?login=" + channel.replace("#", "");
 		tclient.api({
 			url: uri,
