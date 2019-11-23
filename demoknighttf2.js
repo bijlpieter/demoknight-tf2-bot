@@ -31,7 +31,7 @@ let commands = {
 	},
 	"chrysophylaxss": {
 		"!commands": "!commands, !demoknight"
-	}
+	},
 	"riskendeavors": {
 		"!commands": "!commands, !demoknight"
 	}
