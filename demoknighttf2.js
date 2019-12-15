@@ -23,16 +23,16 @@ const tclient = new tmi.client(options);
 tclient.connect();
 
 let commands = {
-	"solarlighttf2": {
+	"#solarlighttf2": {
 		"!commands": "!commands, !demoknight"
 	},
-	"mrswipez1": {
+	"#mrswipez1": {
 		"!commands": "!commands, !demoknight"
 	},
-	"chrysophylaxss": {
+	"#chrysophylaxss": {
 		"!commands": "!commands, !demoknight"
 	},
-	"riskendeavors": {
+	"#riskendeavors": {
 		"!commands": "!commands, !demoknight"
 	}
 };
@@ -58,6 +58,7 @@ tclient.on('chat', (channel, userstate, message, self) => {
 
 dclient.on('message', (message) => {
 	if (message.content == "!clip") return message.channel.send("Can't clip discord!");
+	if (message.content == "!uptime") return message.channel.send("This command is for twitch only!");
 	if (message.content.startsWith("!") && !message.author.bot) {
 		let response = handleCommand(message.content.toLowerCase(), "#solarlighttf2", message.member.displayName, message.member.hasPermission('MANAGE_MESSAGES', true, true, true));
 		if (response) message.channel.send(response);
@@ -69,6 +70,7 @@ function handleCommand(msg, channel, name, mod) {
 	if (msg.startsWith('!addcomm') && mod) return newCommand(msg, channel);
 	else if (msg.startsWith('!delcomm') && mod) return delCommand(msg, channel);
 	else if (msg == "!clip") return createClip(channel);
+	else if (msg == "!uptime") return getUptime(channel);
 	else if (msg.startsWith("!demoknight")) return name + " has praised the holy demoknight team fortress 2";
 	else if (commands[channel].hasOwnProperty(msg)) return commands[channel][msg];
 	else return "";
@@ -89,7 +91,7 @@ function newCommand(msg, channel) {
 function delCommand(msg, channel) {
 	let args = msg.split(' ');
 	let delComm = args[1].replace("!", "");
-	if (delComm == "commands" || delComm == "demoknight" || delComm == "clip") return "This command cannot be deleted >:C";
+	if (delComm == "commands" || delComm == "demoknight" || delComm == "clip" || delcomm == "uptime") return "This command cannot be deleted >:C";
 	if (commands[channel].hasOwnProperty("!" + delComm)) {
 		delete commands[channel]["!" + delComm];
 		commands[channel]["!commands"] = commands[channel]["!commands"].replace(", !" + delComm, "");
@@ -145,4 +147,14 @@ function createClip(channel) {
 		return "";
 	}
 	else return "A clip was recently made by somebody else!";
+}
+
+function getUptime(channel) {
+	let url = "https://beta.decapi.me/twitch/uptime/" + channel.replace("#", "");
+	req(url, (err, res, body) => {
+		if (err) return console.log(err);
+		if (body.startsWith(channel.replace("#", ""))) tclient.say(channel, body);
+		else tclient.say(channel, channel.replace("#", "") + " has been live for " + body);
+	});
+	return "";
 }
