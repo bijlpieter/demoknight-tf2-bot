@@ -1,6 +1,7 @@
 const discord = require('discord.js');
 const tmi = require('tmi.js');
 const req = require('request');
+const process.env = require('./settings.json');
 
 const options = {
 	connection: {
@@ -22,20 +23,7 @@ dclient.login(process.env.TOKEN);
 const tclient = new tmi.client(options);
 tclient.connect();
 
-let commands = {
-	"#solarlighttf2": {
-		"!commands": "!commands, !demoknight"
-	},
-	"#mrswipez1": {
-		"!commands": "!commands, !demoknight"
-	},
-	"#chrysophylaxss": {
-		"!commands": "!commands, !demoknight"
-	},
-	"#riskendeavors": {
-		"!commands": "!commands, !demoknight"
-	}
-};
+let commands;
 
 req(process.env.COMMANDS, { json: true }, (err, res, body) => {
 	if (err) return console.log(err);
@@ -58,7 +46,7 @@ tclient.on('chat', (channel, userstate, message, self) => {
 
 dclient.on('message', (message) => {
 	if (message.content == "!clip") return message.channel.send("Can't clip discord!");
-	if (message.content == "!uptime") return message.channel.send("This command is for twitch only!");
+	if (message.content == "!uptime") return message.channel.send("This command is for twitch only! :(");
 	if (message.content.startsWith("!") && !message.author.bot) {
 		let response = handleCommand(message.content.toLowerCase(), "#solarlighttf2", message.member.displayName, message.member.hasPermission('MANAGE_MESSAGES', true, true, true));
 		if (response) message.channel.send(response);
@@ -67,34 +55,45 @@ dclient.on('message', (message) => {
 });
 
 function handleCommand(msg, channel, name, mod) {
-	if (msg.startsWith('!addcomm') && mod) return newCommand(msg, channel);
-	else if (msg.startsWith('!delcomm') && mod) return delCommand(msg, channel);
+	if (msg.startsWith('!addcomm')) return newCommand(msg, channel, mod);
+	else if (msg.startsWith('!delcomm')) return delCommand(msg, channel, mod);
+	else if (msg == "!commands") return "-- Default Commands -- !clip, !commands, !demoknight, !info, !ping, !uptime -- Custom Commands -- " + commands[channel]["!commands"];
 	else if (msg == "!clip") return createClip(channel);
+	else if (msg == "!ping") return "pong";
+	else if (msg == "!info") return "demoknight_tf2 bot on GitHub: github.com/Chrysophylaxs/demoknight-tf2-bot";
 	else if (msg == "!uptime") return getUptime(channel);
 	else if (msg.startsWith("!demoknight")) return name + " has praised the holy demoknight team fortress 2";
 	else if (commands[channel].hasOwnProperty(msg)) return commands[channel][msg];
 	else return "";
 }
 
-function newCommand(msg, channel) {
+function newCommand(msg, channel, mod) {
+	if (!mod) return "You don't have permission to use this command! D:";
 	let args = msg.split(' ');
-	if (args.length < 3) return "Invalid usage! Try: !addcomm command_name response";
-	let newComm = args[1].replace("!", "");
-	if (newComm == "commands" || newComm == "demoknight" || newComm == "clip") return "Do not try to overwrite the !commands command >:C";
+	if (args.length < 3) return "Invalid usage! Try: !addcomm [command_name] [response]";
+	let newComm = "!" + args[1].replace("!", "");
+	if (isInvalidComm(newComm)) return "This command cannot be overwritten! >:C";
 	args = args.splice(2);
-	if (!commands[channel].hasOwnProperty("!" + newComm)) commands[channel]["!commands"] += ", !" + newComm;
-	commands[channel]["!" + newComm] = args.join(" ");
+	if (!commands[channel].hasOwnProperty(newComm)) {
+		let temp = commands[channel]["!commands"].split(', ');
+		temp.push(newComm);
+		temp.sort();
+		commands[channel]["!commands"] = temp.join(", ");
+	}
+	commands[channel][newComm] = args.join(" ");
 	updateCommands();
 	return "Added or updated command!";
 }
 
-function delCommand(msg, channel) {
+function delCommand(msg, channel, mod) {
+	if (!mod) return "You don't have permission to use this command! D:";
 	let args = msg.split(' ');
-	let delComm = args[1].replace("!", "");
-	if (delComm == "commands" || delComm == "demoknight" || delComm == "clip" || delcomm == "uptime") return "This command cannot be deleted >:C";
-	if (commands[channel].hasOwnProperty("!" + delComm)) {
-		delete commands[channel]["!" + delComm];
-		commands[channel]["!commands"] = commands[channel]["!commands"].replace(", !" + delComm, "");
+	if (args.length < 2) return "Invalid usage! Try: !delcomm [command_name]";
+	let delComm = "!" + args[1].replace("!", "");
+	if (isInvalidComm(delComm)) return "This command cannot be deleted! >:C";
+	if (commands[channel].hasOwnProperty(delComm)) {
+		delete commands[channel][delComm];
+		commands[channel]["!commands"] = commands[channel]["!commands"].replace(", " + delComm, "");
 		updateCommands();
 		return "Deleted command!";
 	}
@@ -157,4 +156,8 @@ function getUptime(channel) {
 		else tclient.say(channel, channel.replace("#", "") + " has been live for " + body);
 	});
 	return "";
+}
+
+function isInvalidComm(comm) {
+	return comm == "!commands" || comm.startsWith("!demoknight") || comm == "!clip" || comm == "!uptime" || comm == "!info" || comm == "!rtd";
 }
