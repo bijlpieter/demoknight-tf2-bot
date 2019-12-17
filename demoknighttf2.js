@@ -1,7 +1,6 @@
 const discord = require('discord.js');
 const tmi = require('tmi.js');
 const req = require('request');
-const process.env = require('./settings.json');
 
 const options = {
 	connection: {
