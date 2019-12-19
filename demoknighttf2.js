@@ -1,8 +1,11 @@
 const discord = require('discord.js');
 const tmi = require('tmi.js');
 const req = require('request');
+// const config = require('./settings.json')
 
-const options = {
+const dclient = new discord.Client({disableEveryone: true});
+dclient.login(process.env.TOKEN);
+const solarclient = new tmi.client({
 	connection: {
 		reconnect: true,
 		secure: true,
@@ -12,15 +15,27 @@ const options = {
 	},
 	identity: {
 		username: "demoknight_tf2",
-		password: process.env.TWITCH
+		password: process.env.SOLAR
 	},
-	channels: ['SolarLightTF2', 'mrswipez1', 'chrysophylaxss', 'riskendeavors']
-};
+	channels: ['SolarLightTF2', 'chrysophylaxss', 'riskendeavors']
+});
+solarclient.connect();
 
-const dclient = new discord.Client({disableEveryone: true});
-dclient.login(process.env.TOKEN);
-const tclient = new tmi.client(options);
-tclient.connect();
+const swipezclient = new tmi.client({
+	connection: {
+		reconnect: true,
+		secure: true,
+	},
+	options: {
+		debug: false,
+	},
+	identity: {
+		username: "swipezslave",
+		password: process.env.SWIPEZ
+	},
+	channels: ['mrswipez1']
+});
+swipezclient.connect();
 
 let commands;
 
@@ -34,12 +49,21 @@ dclient.on("ready", function() {
 	console.log("demoknight tf2");
 });
 
-tclient.on('chat', (channel, userstate, message, self) => {
+solarclient.on('chat', (channel, userstate, message, self) => {
 	if (message.startsWith("!") && !self) {
 		let response = "";
-		if (userstate.badges == null) response = handleCommand(message.toLowerCase(), channel, userstate['display-name'], false);
-		else response = handleCommand(message.toLowerCase(), channel, userstate['display-name'], userstate.badges.hasOwnProperty('moderator') || userstate.badges.hasOwnProperty('broadcaster'));
-		if (response) tclient.say(channel, response);
+		if (userstate.badges == null) response = handleCommand(solarclient, message.toLowerCase(), channel, userstate['display-name'], false);
+		else response = handleCommand(solarclient, message.toLowerCase(), channel, userstate['display-name'], userstate.badges.hasOwnProperty('moderator') || userstate.badges.hasOwnProperty('broadcaster'));
+		if (response) solarclient.say(channel, response);
+	}
+});
+
+swipezclient.on('chat', (channel, userstate, message, self) => {
+	if (message.startsWith("!") && !self) {
+		let response = "";
+		if (userstate.badges == null) response = handleCommand(swipezclient, message.toLowerCase(), channel, userstate['display-name'], false);
+		else response = handleCommand(swipezclient, message.toLowerCase(), channel, userstate['display-name'], userstate.badges.hasOwnProperty('moderator') || userstate.badges.hasOwnProperty('broadcaster'));
+		if (response) swipezclient.say(channel, response);
 	}
 });
 
@@ -47,20 +71,20 @@ dclient.on('message', (message) => {
 	if (message.content == "!clip") return message.channel.send("Can't clip discord!");
 	if (message.content == "!uptime") return message.channel.send("This command is for twitch only! :(");
 	if (message.content.startsWith("!") && !message.author.bot) {
-		let response = handleCommand(message.content.toLowerCase(), "#solarlighttf2", message.member.displayName, message.member.hasPermission('MANAGE_MESSAGES', true, true, true));
+		let response = handleCommand(dclient, message.content.toLowerCase(), "#solarlighttf2", message.member.displayName, message.member.hasPermission('MANAGE_MESSAGES', true, true, true));
 		if (response) message.channel.send(response);
 	}
 	return undefined;
 });
 
-function handleCommand(msg, channel, name, mod) {
+function handleCommand(client, msg, channel, name, mod) {
 	if (msg.startsWith('!addcomm')) return newCommand(msg, channel, mod);
 	else if (msg.startsWith('!delcomm')) return delCommand(msg, channel, mod);
 	else if (msg == "!commands") return "-- Default Commands -- !clip, !commands, !demoknight, !info, !ping, !uptime -- Custom Commands -- " + commands[channel]["!commands"];
-	else if (msg == "!clip") return createClip(channel);
+	else if (msg == "!clip") return createClip(channel, (param) => {client.say(channel, param)});
 	else if (msg == "!ping") return "pong";
 	else if (msg == "!info") return "demoknight_tf2 bot on GitHub: github.com/Chrysophylaxs/demoknight-tf2-bot";
-	else if (msg == "!uptime") return getUptime(channel);
+	else if (msg == "!uptime") return getUptime(channel, (param) => {client.say(channel, param)});
 	else if (msg.startsWith("!demoknight")) return name + " has praised the holy demoknight team fortress 2";
 	else if (commands[channel].hasOwnProperty(msg)) return commands[channel][msg];
 	else return "";
@@ -105,12 +129,12 @@ function updateCommands() {
 
 const clipped = new Set();
 
-function createClip(channel) {
+function createClip(channel, callback) {
 	if (!clipped.has(channel)) {
 		clipped.add(channel);
 		setTimeout(() => {clipped.delete(channel);}, 20000);
 		let uri = "https://api.twitch.tv/kraken/users?login=" + channel.replace("#", "");
-		tclient.api({
+		solarclient.api({
 			url: uri,
 			method: "GET",
 			headers: {
@@ -119,11 +143,12 @@ function createClip(channel) {
 			}
 		}, (err, res, body) => {
 			if (err) {
-				tclient.say(channel, "An error occurred!");
+				callback("An error occurred!");
+				// solarclient.say(channel, "An error occurred!");
 				return "";
 			}
 			let id = body.users[0]._id;
-			tclient.api({
+			solarclient.api({
 				url: "https://api.twitch.tv/helix/clips?broadcaster_id=" + id,
 				method: "POST",
 				headers: {
@@ -133,12 +158,14 @@ function createClip(channel) {
 				}
 			}, (err, res, body) => {
 				if (body.hasOwnProperty('error')) {
-					tclient.say(channel, body.message);
+					callback(body.message);
+					// solarclient.say(channel, body.message);
 				}
 				else {
 					let clipID = body.data[0].id
 					console.log("https://clips.twitch.tv/" + clipID);
-					tclient.say(channel, "https://clips.twitch.tv/" + clipID);
+					callback("https://clips.twitch.tv/" + clipID);
+					// solarclient.say(channel, "https://clips.twitch.tv/" + clipID);
 				}
 			});
 		});
@@ -147,12 +174,12 @@ function createClip(channel) {
 	else return "A clip was recently made by somebody else!";
 }
 
-function getUptime(channel) {
+function getUptime(channel, callback) {
 	let url = "https://beta.decapi.me/twitch/uptime/" + channel.replace("#", "");
 	req(url, (err, res, body) => {
 		if (err) return console.log(err);
-		if (body.startsWith(channel.replace("#", ""))) tclient.say(channel, body);
-		else tclient.say(channel, channel.replace("#", "") + " has been live for " + body);
+		if (body.startsWith(channel.replace("#", ""))) callback(body); // solarclient.say(channel, body);
+		else callback(channel.replace("#", "") + " has been live for " + body); // solarclient.say(channel, channel.replace("#", "") + " has been live for " + body);
 	});
 	return "";
 }
