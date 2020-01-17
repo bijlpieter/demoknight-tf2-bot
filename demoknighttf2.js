@@ -67,6 +67,10 @@ swipezclient.on('chat', (channel, userstate, message, self) => {
 	}
 });
 
+swipezclient.on('raided', (channel, username, viewers) => {
+	swipezclient.say(channel, "PogChamp " + username + " is raiding!!! PogChamp");
+});
+
 dclient.on('message', (message) => {
 	if (message.content == "!clip") return message.channel.send("Can't clip discord!");
 	if (message.content == "!uptime") return message.channel.send("This command is for twitch only! :(");
