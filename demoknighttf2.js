@@ -50,7 +50,7 @@ req({
 });
 
 dclient.on("ready", function() {
-	dclient.user.setActivity("demoknight tf2", {type: "PLAYING"});
+	dclient.user.setActivity("soldier tf2", {type: "PLAYING"});
 	console.log("demoknight tf2");
 });
 
