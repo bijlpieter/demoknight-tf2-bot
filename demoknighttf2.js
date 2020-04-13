@@ -1,10 +1,9 @@
 const discord = require("discord.js");
 const tmi = require("tmi.js");
 const req = require("request");
-const config = require("./settings.json")
 
 const dclient = new discord.Client({disableEveryone: true});
-dclient.login(config.TOKEN);
+dclient.login(process.env.TOKEN);
 const solarclient = new tmi.client({
 	connection: {
 		reconnect: true,
@@ -15,7 +14,7 @@ const solarclient = new tmi.client({
 	},
 	identity: {
 		username: "demoknight_tf2",
-		password: config.SOLAR
+		password: process.env.SOLAR
 	},
 	channels: ["SolarLightTF2", "chrysophylaxss", "riskendeavors"]
 });
@@ -31,7 +30,7 @@ const swipezclient = new tmi.client({
 	},
 	identity: {
 		username: "swipezslave",
-		password: config.SWIPEZ
+		password: process.env.SWIPEZ
 	},
 	channels: ["mrswipez1"]
 });
@@ -41,7 +40,7 @@ let commands;
 
 req({
 	method: "GET",
-	uri: config.COMMANDS,
+	uri: process.env.COMMANDS,
 	headers: {
 		"secret-key": process.env.JSONAPI
 	}
@@ -136,9 +135,9 @@ function delCommand(msg, channel, mod) {
 
 function updateCommands() {
 	req({method: "PUT",
-		uri: config.COMMANDS,
+		uri: process.env.COMMANDS,
 		headers: {
-			"secret-key": config.JSONAPI
+			"secret-key": process.env.JSONAPI
 		},
 		json: commands
 	});
@@ -156,7 +155,7 @@ function createClip(channel, callback) {
 			method: "GET",
 			headers: {
 				"Accept": "application/vnd.twitchtv.v5+json",
-				"Client-ID": config.CLIENTID
+				"Client-ID": process.env.CLIENTID
 			}
 		}, (err, res, body) => {
 			if (err) {
@@ -170,8 +169,8 @@ function createClip(channel, callback) {
 				method: "POST",
 				headers: {
 					"Accept": "application/vnd.twitchtv.v5+json",
-					"Client-ID": config.CLIENTID,
-					"Authorization": config.BEARER
+					"Client-ID": process.env.CLIENTID,
+					"Authorization": process.env.BEARER
 				}
 			}, (err, res, body) => {
 				if (body.hasOwnProperty("error")) {
