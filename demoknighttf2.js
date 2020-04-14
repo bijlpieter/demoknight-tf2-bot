@@ -89,7 +89,7 @@ dclient.on("message", (message) => {
 function handleCommand(client, msg, channel, name, mod) {
 	if (msg.startsWith("!addcomm")) return newCommand(msg, channel, mod);
 	else if (msg.startsWith("!delcomm")) return delCommand(msg, channel, mod);
-	else if (msg == "!commands") return "-- Default Commands -- !clip, !commands, !demoknight, !info, !ping, !uptime -- Custom Commands -- " + commands[channel]["!commands"];
+	else if (msg == "!commands"  && commands[channel].hasOwnProperty("!commands")) return "-- Default Commands -- !clip, !commands, !demoknight, !info, !ping, !uptime -- Custom Commands -- " + commands[channel]["!commands"];
 	else if (msg == "!clip") return createClip(channel, (param) => {client.say(channel, param)});
 	else if (msg == "!ping") return "pong";
 	else if (msg == "!info") return "demoknight_tf2 bot on GitHub: github.com/Chrysophylaxs/demoknight-tf2-bot";
