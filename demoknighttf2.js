@@ -1,6 +1,6 @@
 const discord = require("discord.js");
 const tmi = require("tmi.js");
-const req = require("request");
+const https = require("https");
 
 const dclient = new discord.Client({disableEveryone: true});
 dclient.login(process.env.TOKEN);
@@ -38,16 +38,37 @@ swipezclient.connect();
 
 let commands;
 
-req({
-	method: "GET",
-	uri: process.env.COMMANDS,
-	headers: {
-		"secret-key": process.env.JSONAPI
+function getCommands() {
+	const options = {
+		hostname: "api.jsonbin.io",
+		port: 443,
+		path: "/b/" + process.env.COMMANDS + "/latest",
+		method: 'GET',
+		headers: {
+			"secret-key": process.env.JSONAPI
+		}
 	}
-}, (err, res, body) => {
-	if (err) return console.log(err);
-	commands = body;
-});
+
+	const req = https.request(options, res => {
+		console.log(`statusCode: ${res.statusCode}`)
+		let fullData = ""
+		res.on('data', data => {
+			fullData += data;
+		})
+
+	    res.on('end', () => {
+	    	commands = JSON.parse(fullData);
+	    });
+	})
+
+	req.on('error', error => {
+		console.error(error)
+	})
+
+	req.end()
+}
+
+getCommands();
 
 dclient.on("ready", function() {
 	dclient.user.setActivity("soldier tf2", {type: "PLAYING"});
@@ -134,13 +155,30 @@ function delCommand(msg, channel, mod) {
 }
 
 function updateCommands() {
-	req({method: "PUT",
-		uri: process.env.COMMANDS,
+	const options = {
+		hostname: "api.jsonbin.io",
+		port: 443,
+		path: "/b/" + process.env.COMMANDS,
+		method: "PUT",
 		headers: {
+			'Content-Type': 'application/json',
 			"secret-key": process.env.JSONAPI
-		},
-		json: commands
-	});
+		}
+	}
+
+	const req = https.request(options, res => {
+		console.log(`statusCode: ${res.statusCode}`)
+		res.on('data', d => {
+			console.log(d);
+		})
+	})
+
+	req.on('error', error => {
+		console.error(error);
+	})
+
+	req.write(JSON.stringify(commands));
+	req.end();
 }
 
 const clipped = new Set();
