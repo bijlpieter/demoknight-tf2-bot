@@ -71,7 +71,7 @@ function getCommands() {
 getCommands();
 
 dclient.on("ready", function() {
-	dclient.user.setActivity("soldier tf2", {type: "PLAYING"});
+	dclient.user.setActivity("demoknight tf2", {type: "PLAYING"});
 	console.log("demoknight tf2");
 });
 
@@ -98,6 +98,10 @@ swipezclient.on("raided", (channel, username, viewers) => {
 });
 
 dclient.on("message", (message) => {
+	if (message.content.startsWith("!setAvatar")) {
+	    let args = message.content.split(" ");
+	    dclient.user.setAvatar(args[1]);
+	}
 	if (message.content == "!clip") return message.channel.send("Can't clip discord!");
 	if (message.content == "!uptime") return message.channel.send("This command is for twitch only! :(");
 	if (message.content.startsWith("!") && !message.author.bot) {
