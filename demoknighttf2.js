@@ -1,6 +1,7 @@
 const discord = require("discord.js");
 const tmi = require("tmi.js");
 const https = require("https");
+const req = require("request");
 
 const dclient = new discord.Client({disableEveryone: true});
 dclient.login(process.env.TOKEN);
