@@ -1,244 +1,218 @@
 const discord = require("discord.js");
 const tmi = require("tmi.js");
-const https = require("https");
-const req = require("request");
+const req = require("./httprequest.js");
 
-const dclient = new discord.Client({disableEveryone: true});
-dclient.login(process.env.TOKEN);
-const solarclient = new tmi.client({
-	connection: {
-		reconnect: true,
-		secure: true,
-	},
-	options: {
-		debug: false,
-	},
-	identity: {
-		username: "demoknight_tf2",
-		password: process.env.SOLAR
-	},
+const dClient = new discord.Client({disableEveryone: true});
+dClient.login(process.env.TOKEN);
+
+const tClient = new tmi.client({
+	connection: {reconnect: true, secure: true},
+	options: {debug: false},
+	identity: {username: "demoknight_tf2", password: process.env.SOLAR},
 	channels: ["SolarLightTF2", "chrysophylaxss", "riskendeavors"]
 });
-solarclient.connect();
-
-const swipezclient = new tmi.client({
-	connection: {
-		reconnect: true,
-		secure: true,
-	},
-	options: {
-		debug: false,
-	},
-	identity: {
-		username: "swipezslave",
-		password: process.env.SWIPEZ
-	},
-	channels: ["mrswipez1"]
-});
-swipezclient.connect();
+tClient.connect();
 
 let commands;
+const cDefault = "!clip, !commands, !demoknight, !info, !ping, !uptime";
 
 function getCommands() {
-	const options = {
-		hostname: "api.jsonbin.io",
-		port: 443,
-		path: "/b/" + process.env.COMMANDS + "/latest",
-		method: 'GET',
-		headers: {
-			"secret-key": process.env.JSONAPI
-		}
-	}
-
-	const req = https.request(options, res => {
-		console.log(`statusCode: ${res.statusCode}`)
-		let fullData = ""
-		res.on('data', data => {
-			fullData += data;
-		})
-
-	    res.on('end', () => {
-	    	commands = JSON.parse(fullData);
-	    });
-	})
-
-	req.on('error', error => {
-		console.error(error)
-	})
-
-	req.end()
+	req.get("https://api.jsonbin.io/b/" + process.env.COMMANDS + "/latest",
+		{"secret-key": process.env.JSONAPI})
+		.then((data) => {commands = JSON.parse(data)})
+		.catch((error) => {console.log("Could not get commands on startup: " + error)}
+	);
 }
 
 getCommands();
 
-dclient.on("ready", function() {
-	dclient.user.setActivity("demoknight tf2", {type: "PLAYING"});
+dClient.on("ready", function() {
+	dClient.user.setActivity("demoknight tf2", {type: "PLAYING"});
 	console.log("demoknight tf2");
 });
 
-solarclient.on("chat", (channel, userstate, message, self) => {
+function isTwitchMod(userstate) {
+	if (userstate.badges == null) return false;
+	return userstate.badges.hasOwnProperty("moderator") || userstate.badges.hasOwnProperty("broadcaster");
+}
+
+tClient.on("chat", (channel, userstate, message, self) => {
 	if (message.startsWith("!") && !self) {
-		let response = "";
-		if (userstate.badges == null) response = handleCommand(solarclient, message.toLowerCase(), channel, userstate["display-name"], false);
-		else response = handleCommand(solarclient, message.toLowerCase(), channel, userstate["display-name"], userstate.badges.hasOwnProperty("moderator") || userstate.badges.hasOwnProperty("broadcaster"));
-		if (response) solarclient.say(channel, response);
+		let args = message.split(" ");
+		let command = args[0].toLowerCase();
+		handleCommand({
+			"message": message,
+			"command": command,
+			"args": args,
+			"author": userstate["display-name"],
+			"channel": channel,
+			"mod": isTwitchMod(userstate)
+		})
+		.then((response) => {if (response) tClient.say(channel, response)})
+		.catch((error) => {console.log(error); if (error) tClient.say(channel, error)});
 	}
 });
 
-swipezclient.on("chat", (channel, userstate, message, self) => {
-	if (message.startsWith("!") && !self) {
-		let response = "";
-		if (userstate.badges == null) response = handleCommand(swipezclient, message.toLowerCase(), channel, userstate["display-name"], false);
-		else response = handleCommand(swipezclient, message.toLowerCase(), channel, userstate["display-name"], userstate.badges.hasOwnProperty("moderator") || userstate.badges.hasOwnProperty("broadcaster"));
-		if (response) swipezclient.say(channel, response);
-	}
-});
-
-swipezclient.on("raided", (channel, username, viewers) => {
-	swipezclient.say(channel, "PogChamp " + username + " is raiding!!! PogChamp");
-});
-
-dclient.on("message", (message) => {
-	if (message.content == "!clip") return message.channel.send("Can't clip discord!");
-	if (message.content == "!uptime") return message.channel.send("This command is for twitch only! :(");
+dClient.on("message", (message) => {
 	if (message.content.startsWith("!") && !message.author.bot) {
-		let response = handleCommand(dclient, message.content.toLowerCase(), "#solarlighttf2", message.member.displayName, message.member.hasPermission("MANAGE_MESSAGES", true, true, true));
-		if (response) message.channel.send(response);
+		let args = message.content.split(" ");
+		let command = args[0].toLowerCase();
+		handleCommand({
+			"command": command,
+			"args": args,
+			"author": message.member.displayName,
+			"channel": "#solarlighttf2",
+			"mod": message.member.hasPermission("MANAGE_MESSAGES", true, true, true)
+		})
+		.then((response) => {if (response) message.channel.send(response)})
+		.catch((error) => {console.log(error); if (error) message.channel.send(error)});
 	}
 	return undefined;
 });
 
-function handleCommand(client, msg, channel, name, mod) {
-	if (msg.startsWith("!addcomm")) return newCommand(msg, channel, mod);
-	else if (msg.startsWith("!delcomm")) return delCommand(msg, channel, mod);
-	else if (msg == "!commands"  && commands[channel].hasOwnProperty("!commands")) return "-- Default Commands -- !clip, !commands, !demoknight, !info, !ping, !uptime -- Custom Commands -- " + commands[channel]["!commands"];
-	else if (msg == "!clip") return createClip(channel, (param) => {client.say(channel, param)});
-	else if (msg == "!ping") return "pong";
-	else if (msg == "!info") return "demoknight_tf2 bot on GitHub: github.com/Chrysophylaxs/demoknight-tf2-bot";
-	else if (msg == "!uptime") return getUptime(channel, (param) => {client.say(channel, param)});
-	else if (msg.startsWith("!demoknight")) return name + " has praised the holy demoknight team fortress 2";
-	else if (msg.startsWith("!soldier")) return name + " has praised soldier tf2";
-	else if (commands[channel].hasOwnProperty(msg)) return commands[channel][msg];
-	else return "";
+function handleCommand(options) {
+	switch (options.command) {
+		case "!addcomm":
+		case "!addcommand":
+			return newCommand(options);
+			break;
+		case "!editcomm":
+		case "!editcommand":
+			return editCommand(options);
+			break;
+		case "!delcomm":
+		case "!delcommand":
+			return delCommand(options);
+			break;
+		case "!commands":
+			return new Promise((resolve, reject) => {
+				retrieveCommand("!commands", options.channel).then((response) => resolve(cDefault + response)).catch((error) => reject(error));
+			});
+			break;
+		case "!clip":
+			return createClip(options.channel);
+			break;
+		case "!ping":
+			return new Promise((resolve) => resolve("!pong"));
+			break;
+		case "!info":
+			return new Promise((resolve) => resolve("demoknight_tf2 bot on GitHub: github.com/Chrysophylaxs/demoknight-tf2-bot"));
+			break;
+		case "!uptime":
+			return getUptime(options.channel);
+			break;
+		case "!demoknight":
+		case "!demoknighttf2":
+			return new Promise((resolve) => resolve(options.author + " has praised the holy demoknight team fortress 2"));
+			break;
+		case "!soldier":
+		case "!soldiertf2":
+			return new Promise((resolve) => resolve(options.author + " has praised soldier tf2"));
+			break;
+		default:
+			return retrieveCommand(options.command, options.channel);
+			break;
+	}
 }
 
-function newCommand(msg, channel, mod) {
-	if (!mod) return "You don't have permission to use this command! D:";
-	let args = msg.split(" ");
-	if (args.length < 3) return "Invalid usage! Try: !addcomm [command_name] [response]";
-	let newComm = "!" + args[1].replace("!", "");
-	if (isInvalidComm(newComm)) return "This command cannot be overwritten! >:C";
-	args = args.splice(2);
-	if (!commands[channel].hasOwnProperty(newComm)) {
-		let temp = commands[channel]["!commands"].split(", ");
+function retrieveCommand(comm, channel) {
+	return new Promise((resolve, reject) => {
+		if (commands[channel].hasOwnProperty(comm)) resolve(commands[channel][comm]);
+		else reject("");
+	});
+}
+
+function newCommand(options) {
+	return new Promise((resolve, reject) => {
+		if (!options.mod) return reject("You don't have permission to use this command! D:");
+		if (options.args.length < 3) return reject("Invalid usage! Try: !addcomm [command_name] [response]");
+		let newComm = "!" + options.args[1].replace("!", ""); // add leading '!' if omitted in command
+		newComm = newComm.toLowerCase();
+		if (isInvalidComm(newComm)) return reject("This command cannot be added! >:C");
+		if (commands[options.channel].hasOwnProperty(newComm)) return reject("Command already exists, use !editcomm [command_name] [new_reponse] to edit the command");
+		let args = options.args.splice(2);
+		commands[options.channel][newComm] = args.join(" ");
+		let temp = commands[options.channel]["!commands"].split(", ");
 		temp.push(newComm);
 		temp.sort();
-		commands[channel]["!commands"] = temp.join(", ");
-	}
-	commands[channel][newComm] = args.join(" ");
-	updateCommands();
-	return "Added or updated command!";
+		commands[options.channel]["!commands"] = temp.join(", ");
+		updateCommands();
+		return resolve("Added command successfully!");
+	});
 }
 
-function delCommand(msg, channel, mod) {
-	if (!mod) return "You don't have permission to use this command! D:";
-	let args = msg.split(" ");
-	if (args.length < 2) return "Invalid usage! Try: !delcomm [command_name]";
-	let delComm = "!" + args[1].replace("!", "");
-	if (isInvalidComm(delComm)) return "This command cannot be deleted! >:C";
-	if (commands[channel].hasOwnProperty(delComm)) {
-		delete commands[channel][delComm];
-		commands[channel]["!commands"] = commands[channel]["!commands"].replace(", " + delComm, "");
+function editCommand(options) {
+	return new Promise((resolve, reject) => {
+		if (!options.mod) return reject("You don't have permission to use this command! D:");
+		if (options.args.length < 3) return reject("Invalid usage! Try: !editcomm [command_name] [response]");
+		let newComm = "!" + options.args[1].replace("!", ""); // add leading '!' if omitted in command
+		newComm = newComm.toLowerCase();
+		if (isInvalidComm(newComm)) return reject("This command cannot be overwritten! >:C");
+		if (!commands[options.channel].hasOwnProperty(newComm)) return reject("Command does not exist, use !addcomm [command_name] [new_reponse] to add the command");
+		let args = options.args.splice(2);
+		commands[options.channel][newComm] = args.join(" ");
 		updateCommands();
-		return "Deleted command!";
-	}
-	else return "Command does not exist!";
+		return resolve("Updated command successfully!");
+	});
+}
+
+function delCommand(options) {
+	return new Promise((resolve, reject) => {
+		if (!options.mod) return reject("You don't have permission to use this command! D:");
+		if (options.args.length < 2) return reject("Invalid usage! Try: !delcomm [command_name]");
+		let newComm = "!" + options.args[1].replace("!", ""); // add leading '!' if omitted in command
+		newComm = newComm.toLowerCase();
+		if (isInvalidComm(newComm)) return reject("This command cannot be deleted! >:C");
+		if (!commands[options.channel].hasOwnProperty(newComm)) return reject("Command does not exist, use !addcomm [command_name] [new_reponse] to add the command");
+		delete commands[options.channel][newComm];
+		commands[options.channel]["!commands"] = commands[options.channel]["!commands"].replace(", " + newComm, "");
+		updateCommands();
+		return resolve("Deleted command successfully!");
+	});
 }
 
 function updateCommands() {
-	const options = {
-		hostname: "api.jsonbin.io",
-		port: 443,
-		path: "/b/" + process.env.COMMANDS,
-		method: "PUT",
-		headers: {
-			'Content-Type': 'application/json',
-			"secret-key": process.env.JSONAPI
-		}
-	}
-
-	const req = https.request(options, res => {
-		console.log(`statusCode: ${res.statusCode}`)
-		res.on('data', d => {
-			console.log(d);
-		})
-	})
-
-	req.on('error', error => {
-		console.error(error);
-	})
-
-	req.write(JSON.stringify(commands));
-	req.end();
+	req.put("https://api.jsonbin.io/b/" + process.env.COMMANDS, JSON.stringify(commands), {
+		'Content-Type': 'application/json',
+		"secret-key": process.env.JSONAPI
+	}).then((data) => console.log(data)).catch((error) => console.error(error));
 }
 
 const clipped = new Set();
 
-function createClip(channel, callback) {
-	if (!clipped.has(channel)) {
+function createClip(channel) {
+	return new Promise((resolve, reject) => {
+		if (clipped.has(channel)) return reject("A clip was recently made by somebody else!");
 		clipped.add(channel);
-		setTimeout(() => {clipped.delete(channel);}, 20000);
-		let uri = "https://api.twitch.tv/kraken/users?login=" + channel.replace("#", "");
-		solarclient.api({
-			url: uri,
-			method: "GET",
-			headers: {
+		setTimeout(() => {clipped.delete(channel)}, 20000);
+		req.get("https://api.twitch.tv/kraken/users?login=" + channel.replace("#", ""), {
+			"Accept": "application/vnd.twitchtv.v5+json",
+			"Client-ID": process.env.CLIENTID
+		}).then((response) => {
+			let res = JSON.parse(response);
+			let id = res.users[0]._id;
+			return req.post("https://api.twitch.tv/helix/clips?broadcaster_id=" + id, "", {
 				"Accept": "application/vnd.twitchtv.v5+json",
-				"Client-ID": process.env.CLIENTID
-			}
-		}, (err, res, body) => {
-			if (err) {
-				callback("An error occurred!");
-				// solarclient.say(channel, "An error occurred!");
-				return "";
-			}
-			let id = body.users[0]._id;
-			solarclient.api({
-				url: "https://api.twitch.tv/helix/clips?broadcaster_id=" + id,
-				method: "POST",
-				headers: {
-					"Accept": "application/vnd.twitchtv.v5+json",
-					"Client-ID": process.env.CLIENTID,
-					"Authorization": process.env.BEARER
-				}
-			}, (err, res, body) => {
-				if (body.hasOwnProperty("error")) {
-					callback(body.message);
-					// solarclient.say(channel, body.message);
-				}
-				else {
-					let clipID = body.data[0].id
-					console.log("https://clips.twitch.tv/" + clipID);
-					callback("https://clips.twitch.tv/" + clipID);
-					// solarclient.say(channel, "https://clips.twitch.tv/" + clipID);
-				}
+				"Client-ID": process.env.CLIENTID,
+				"Authorization": process.env.BEARER
 			});
+		}).then((response) => {
+			let res = JSON.parse(response);
+			if (res.hasOwnProperty("error")) return reject(res.message);
+			let clipID = res.data[0].id;
+			console.log("https://clips.twitch.tv/" + clipID);
+			return resolve("https://clips.twitch.tv/" + clipID);
+		}).catch((error) => {
+			return reject(error);
 		});
-		return "";
-	}
-	else return "A clip was recently made by somebody else!";
+	});
 }
 
 function getUptime(channel, callback) {
-	let url = "https://beta.decapi.me/twitch/uptime/" + channel.replace("#", "");
-	req(url, (err, res, body) => {
-		if (err) return console.log(err);
-		if (body.startsWith(channel.replace("#", ""))) callback(body); // solarclient.say(channel, body);
-		else callback(channel.replace("#", "") + " has been live for " + body); // solarclient.say(channel, channel.replace("#", "") + " has been live for " + body);
-	});
-	return "";
+	return req.get("https://beta.decapi.me/twitch/uptime/" + channel.replace("#", ""));
 }
 
 function isInvalidComm(comm) {
-	return comm == "!commands" || comm.startsWith("!demoknight") || comm == "!clip" || comm == "!uptime" || comm == "!info" || comm == "!rtd";
+	return comm == "!commands" || comm == "!demoknight" || comm == "!demoknighttf2" || comm == "!soldiertf2" || comm == "!soldiertf2" || comm == "!clip" || comm == "!uptime" || comm == "!info" 
+		|| comm == "!ping" || comm == "!addcomm" || comm == "!editcommand" || comm == "!editcomm" || comm == "!addcommand" || comm == "!delcomm" || comm == "!delcommand";
 }
