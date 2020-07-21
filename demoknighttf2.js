@@ -208,7 +208,7 @@ function createClip(channel) {
 	});
 }
 
-function getUptime(channel, callback) {
+function getUptime(channel) {
 	return req.get("https://beta.decapi.me/twitch/uptime/" + channel.replace("#", ""));
 }
 
