@@ -19,7 +19,7 @@ const cDefault = "!clip, !commands, !demoknight, !info, !ping, !uptime";
 function getCommands() {
 	req.get("https://api.jsonbin.io/v3/b/" + process.env.COMMANDS + "/latest",
 		{"X-Master-Key": process.env.JSONAPI})
-		.then((data) => {commands = JSON.parse(data)})
+		.then((data) => {commands = JSON.parse(data).record; console.log(commands)})
 		.catch((error) => {console.log("Could not get commands on startup: " + error)}
 	);
 }
@@ -54,7 +54,7 @@ tClient.on("chat", (channel, userstate, message, self) => {
 });
 
 dClient.on("message", (message) => {
-	if (message.content.startsWith("!") && !message.author.bot && (msg.guild.id == "592722563185246208" || msg.guild.id == "625711218153488405")) {
+	if (message.content.startsWith("!") && !message.author.bot && (message.guild.id == "592722563185246208" || message.guild.id == "625711218153488405")) {
 		let args = message.content.split(" ");
 		let command = args[0].toLowerCase();
 		handleCommand({
