@@ -17,8 +17,8 @@ let commands;
 const cDefault = "!clip, !commands, !demoknight, !info, !ping, !uptime";
 
 function getCommands() {
-	req.get("https://api.jsonbin.io/b/" + process.env.COMMANDS + "/latest",
-		{"secret-key": process.env.JSONAPI})
+	req.get("https://api.jsonbin.io/v3/b/" + process.env.COMMANDS + "/latest",
+		{"X-Master-Key": process.env.JSONAPI})
 		.then((data) => {commands = JSON.parse(data)})
 		.catch((error) => {console.log("Could not get commands on startup: " + error)}
 	);
@@ -54,7 +54,7 @@ tClient.on("chat", (channel, userstate, message, self) => {
 });
 
 dClient.on("message", (message) => {
-	if (message.content.startsWith("!") && !message.author.bot) {
+	if (message.content.startsWith("!") && !message.author.bot && (msg.guild.id == "592722563185246208" || msg.guild.id == "625711218153488405")) {
 		let args = message.content.split(" ");
 		let command = args[0].toLowerCase();
 		handleCommand({
@@ -172,9 +172,9 @@ function delCommand(options) {
 }
 
 function updateCommands() {
-	req.put("https://api.jsonbin.io/b/" + process.env.COMMANDS, JSON.stringify(commands), {
+	req.put("https://api.jsonbin.io/v3/b/" + process.env.COMMANDS, JSON.stringify(commands), {
 		'Content-Type': 'application/json',
-		"secret-key": process.env.JSONAPI
+		"X-Master-Key": process.env.JSONAPI
 	}).then((data) => console.log(data)).catch((error) => console.error(error));
 }
 
