@@ -1,4 +1,4 @@
-const https = require("https");
+const http = require("https");
 const url = require("url");
 
 exports.get = (uri, headers = {}) => {
@@ -12,7 +12,7 @@ exports.get = (uri, headers = {}) => {
 		headers: headers
 	};
 	return new Promise((resolve, reject) => {
-		const req = https.request(options, res => {
+		const req = http.request(options, res => {
 			let fullData = "";
 			res.on('data', (data) => {fullData += data});
 			res.on('end', () => resolve(fullData));
@@ -35,7 +35,7 @@ exports.post = (uri, data, headers = {}) => {
 		headers: headers
 	};
 	return new Promise((resolve, reject) => {
-		const req = https.request(options, res => {
+		const req = http.request(options, res => {
 			let fullData = "";
 			res.on('data', (data) => {fullData += data});
 			res.on('end', () => resolve(fullData));
@@ -59,7 +59,7 @@ exports.put = (uri, data, headers = {}) => {
 		headers: headers
 	};
 	return new Promise((resolve, reject) => {
-		const req = https.request(options, res => {
+		const req = http.request(options, res => {
 			let fullData = "";
 			res.on('data', (data) => {fullData += data});
 			res.on('end', () => resolve(fullData));
